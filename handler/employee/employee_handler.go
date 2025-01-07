@@ -16,6 +16,7 @@ import (
 
 type EmployeeHandler interface {
 	GetEmployees(ctx *gin.Context)
+	GetEmployeesWithJoin(ctx *gin.Context)
 }
 
 type handler struct {
@@ -60,6 +61,35 @@ func (h handler) GetEmployees(ctx *gin.Context) {
 	}
 
 	response, err := h.service.GetEmployees(*input)
+
+	if err != nil {
+		ctx.JSON(helper.GetErrorStatusCode(err), helper.NewResponse(nil, err))
+		return
+	}
+	ctx.JSON(http.StatusOK, helper.NewResponse(response, nil))
+}
+
+func (h handler) GetEmployeesWithJoin(ctx *gin.Context) {
+	input := new(dto.GetEmployeesRequest)
+
+	setGetEmployeeRequest(ctx, input)
+
+	err := validation.ValidateEmployeeGet(input)
+	if err != nil {
+		ctx.JSON(
+			http.StatusBadRequest,
+			helper.NewResponse(
+				helper.ErrorResponse{
+					Code:    helper.GetErrorStatusCode(err),
+					Message: err.Error(),
+				},
+				err,
+			),
+		)
+		return
+	}
+
+	response, err := h.service.GetEmployeesWithJoin(*input)
 
 	if err != nil {
 		ctx.JSON(helper.GetErrorStatusCode(err), helper.NewResponse(nil, err))
